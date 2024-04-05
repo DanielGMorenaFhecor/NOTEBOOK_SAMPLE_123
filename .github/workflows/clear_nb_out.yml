@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'  # This will trigger the workflow on pushes to any branch
+    paths:
+      - '**.ipynb'  # Only trigger for changes in .ipynb files
 
 jobs:
   clear-outputs:
@@ -11,24 +13,33 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # Updated to the latest version
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v4  # Updated to the latest version
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'  # Specify the Python version you need
+        python-version: '3.x'
 
     - name: Install Jupyter and nbconvert
-      run: |
-        pip install jupyter nbconvert nbformat
+      run: pip install jupyter nbconvert nbformat
 
     - name: Clear outputs from Jupyter notebooks
+      run: find . -name "*.ipynb" -exec jupyter nbconvert --to notebook --ClearOutputPreprocessor.enabled=True --inplace {} \;
+
+    - name: Check for changes # Just to avoid an infinite loop
+      id: git-check
       run: |
-        find . -name "*.ipynb" -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
+        if git diff --quiet; then
+          echo "::set-output name=changes::false"
+        else
+          echo "::set-output name=changes::true"
+        fi
 
     - name: Commit cleared notebooks
-      uses: stefanzweifel/git-auto-commit-action@v5  # Updated to the latest version
+      if: steps.git-check.outputs.changes == 'true'
+      uses: stefanzweifel/git-auto-commit-action@v5
       with:
         commit_message: 'Automatically clear notebook outputs'
         file_pattern: '*.ipynb'
         branch: ${{ github.ref }}
+        
