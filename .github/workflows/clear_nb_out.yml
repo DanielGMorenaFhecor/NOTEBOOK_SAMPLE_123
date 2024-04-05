@@ -1,10 +1,9 @@
 name: Clear Notebook Outputs
 
 on:
-  pull_request:
-    # This triggers the workflow on pull requests to any branch
+  push:
     branches:
-      - '**'
+      - '**'  # This will trigger the workflow on pushes to any branch
 
 jobs:
   clear-outputs:
