@@ -1,0 +1,33 @@
+name: Clear Notebook Outputs
+
+on:
+  pull_request:
+    # This triggers the workflow on pull requests to any branch
+    branches:
+      - '**'
+
+jobs:
+  clear-outputs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Specify the Python version you need
+
+    - name: Install Jupyter
+      run: pip install nbformat
+
+    - name: Clear outputs from Jupyter notebooks
+      run: |
+        find . -name "*.ipynb" -exec jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace {} \;
+
+    - name: Commit cleared notebooks
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: 'Automatically clear notebook outputs'
+        file_pattern: '*.ipynb'
